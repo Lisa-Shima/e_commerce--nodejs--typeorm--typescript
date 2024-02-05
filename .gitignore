@@ -1,0 +1,12 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore build artifacts
+dist/
+*.log
+
+# Ignore environment configuration files
+.env
+
+ormconfig.json
+tsconfig.json
