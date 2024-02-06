@@ -1,13 +1,30 @@
 import { Request, Response } from "express";
 import { getRepository } from "typeorm";
 import { User } from "../entities/User"
+import Joi from "joi"
+
+const userSchema = Joi.object({
+    username: Joi.string().alphanum().min(3).max(30).required(),
+    email: Joi.string().email().required(),
+    password: Joi.string().required(), //pattern(new RegExp(/^[A-Za-z0-9] {3, 30}$/)).
+    fullName: Joi.string().required(),
+    address: Joi.string().required(),
+    phoneNumber: Joi.string().required(), //pattern(new RegExp(/^[0-9]{10}$/)).
+    dateOfBirth: Joi.string().isoDate().required()
+
+})
 
 export const registerUser = async (req: Request, res: Response) => {
     const {username, email, password, fullName, address, phoneNumber, dateOfBirth} = req.body;
+    const { error, value } = userSchema.validate(req.body)
+    if(error){
+        return res.status(400).json({ error: error.details[0].message})
+    }
+    const userData = value;
 
     try{
         const userRepository = getRepository(User)
-        const newUser = userRepository.create({username, email, password, fullName, address, phoneNumber, dateOfBirth})
+        const newUser = userRepository.create(userData)
 
         await userRepository.save(newUser)
 
