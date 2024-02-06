@@ -1,7 +1,9 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { getRepository } from "typeorm";
 import { User } from "../entities/User"
 import Joi from "joi"
+import bcrypt from 'bcrypt';
+import jwt from "jsonwebtoken"
 
 const userSchema = Joi.object({
     username: Joi.string().alphanum().min(3).max(30).required(),
@@ -20,7 +22,9 @@ export const registerUser = async (req: Request, res: Response) => {
     if(error){
         return res.status(400).json({ error: error.details[0].message})
     }
-    const userData = value;
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+    const userData = {...value, password: hashedPassword};
 
     try{
         const userRepository = getRepository(User)
@@ -92,5 +96,39 @@ export const deleteUser = async (req:Request, res:Response) => {
         res.status(204).json({ message: "User removed successfully!"})
     }catch(err){
         res.status(400).json({ error: "Could not delete the user", err})
+    }
+}
+
+export const login = async (req:Request, res:Response) => {
+    const { username, password } = req.body
+    try{
+        const userRepository = getRepository(User)
+        const user = await userRepository.findOne({ where: { username: username } })
+        if(!user){
+            return res.status(404).json({ message: "User not found"})
+        }
+        const validPassword = await bcrypt.compare(password, user.password)
+        if(!validPassword){
+            return res.status(401).json({ message: "Invalid password"})
+        }
+        const token = jwt.sign({id: user.userID, username: user.username}, process.env.SECRET_KEY, {expiresIn: '1h'})
+
+        const tokenWithBearer = `Bearer ${token}`
+        res.set('Authorization', tokenWithBearer)
+        res.status(200).json({token: tokenWithBearer})
+        console.log(tokenWithBearer);
+        
+    }catch(err){
+        res.status(400).json({ message: "Could not sign in", err})
+    }
+}
+
+export const protectedHandler = (req:Request, res:Response) => {
+    try{
+        const user = req.user as User
+        res.status(200).json({ message: "Protected route accessed successfully", user})
+    }catch(err){
+        console.error("Error in getUserProfile:", err);
+        res.status(500).json({ message: "Internal server error" });
     }
 }
