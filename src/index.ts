@@ -3,6 +3,7 @@ import "reflect-metadata"
 import { createConnection } from "typeorm"
 import { User } from "entities/User"
 import userRoutes from "./routes/userRoutes"
+import productRoutes from "./routes/ProductRoutes"
 import bodyParser  from 'body-parser'
 import {requestLogger} from "./middlewares/RequestLoggingMiddleware"
 import { errorMiddleware } from './middlewares/ErrorMiddleware'
@@ -19,6 +20,7 @@ const main = async() => {
 
         app.use(requestLogger)
         app.use('/api', userRoutes)
+        app.use('/api', productRoutes)
         app.use(errorMiddleware)
 
         app.listen(PORT, () => {
