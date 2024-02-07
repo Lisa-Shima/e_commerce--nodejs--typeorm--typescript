@@ -4,6 +4,8 @@ import { createConnection } from "typeorm"
 import { User } from "entities/User"
 import userRoutes from "./routes/userRoutes"
 import productRoutes from "./routes/ProductRoutes"
+import cartRoutes from "./routes/CartRoutes"
+import cartItemRoutes from "./routes/CartItemRoutes"
 import bodyParser  from 'body-parser'
 import {requestLogger} from "./middlewares/RequestLoggingMiddleware"
 import { errorMiddleware } from './middlewares/ErrorMiddleware'
@@ -21,6 +23,8 @@ const main = async() => {
         app.use(requestLogger)
         app.use('/api', userRoutes)
         app.use('/api', productRoutes)
+        app.use('/api', cartRoutes)
+        app.use('/api', cartItemRoutes)
         app.use(errorMiddleware)
 
         app.listen(PORT, () => {
